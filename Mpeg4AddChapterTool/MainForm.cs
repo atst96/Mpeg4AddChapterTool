@@ -136,6 +136,8 @@ namespace Mpeg4AddChapterTool
 
             this.IsAborting = false;
             this.IsRunning = false;
+
+            this.UpdateRunButton();
         }
 
         private async void OnRunButtonClicked(object sender, EventArgs e)
