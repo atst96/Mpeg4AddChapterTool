@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using DragDropLib;
 using MessagePack;
 
 namespace Mpeg4AddChapterTool
@@ -59,6 +58,8 @@ namespace Mpeg4AddChapterTool
             item.Tag = chapter;
 
             this.chapterItemList.Items.Add(item);
+
+            this.UpdateRunButtonStatus();
         }
 
         private void OnChapterItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)

@@ -303,7 +303,7 @@
             this.progressBar1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.progressBar1.Location = new System.Drawing.Point(12, 333);
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(222, 29);
+            this.progressBar1.Size = new System.Drawing.Size(222, 17);
             this.progressBar1.TabIndex = 2;
             // 
             // MainForm
