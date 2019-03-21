@@ -42,6 +42,7 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.chapterItemList = new System.Windows.Forms.ListView();
             this.chapterRemoveButton = new System.Windows.Forms.Button();
+            this.addFolderButton = new System.Windows.Forms.Button();
             this.chapterAddButton = new System.Windows.Forms.Button();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.consoleTextBox = new System.Windows.Forms.TextBox();
@@ -160,6 +161,7 @@
             // 
             this.tabPage1.Controls.Add(this.chapterItemList);
             this.tabPage1.Controls.Add(this.chapterRemoveButton);
+            this.tabPage1.Controls.Add(this.addFolderButton);
             this.tabPage1.Controls.Add(this.chapterAddButton);
             this.tabPage1.Location = new System.Drawing.Point(4, 27);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
@@ -187,6 +189,7 @@
             this.chapterItemList.UseCompatibleStateImageBehavior = false;
             this.chapterItemList.View = System.Windows.Forms.View.Details;
             this.chapterItemList.ItemSelectionChanged += new System.Windows.Forms.ListViewItemSelectionChangedEventHandler(this.OnChapterItemSelectionChanged);
+            this.chapterItemList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             // 
             // chapterRemoveButton
             // 
@@ -201,6 +204,19 @@
             this.chapterRemoveButton.Text = "削除";
             this.chapterRemoveButton.UseVisualStyleBackColor = true;
             this.chapterRemoveButton.Click += new System.EventHandler(this.OnChapterRemoveButtonClicked);
+            // 
+            // addFolderButton
+            // 
+            this.addFolderButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.addFolderButton.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.addFolderButton.Location = new System.Drawing.Point(515, 98);
+            this.addFolderButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.addFolderButton.Name = "addFolderButton";
+            this.addFolderButton.Size = new System.Drawing.Size(100, 29);
+            this.addFolderButton.TabIndex = 3;
+            this.addFolderButton.Text = "一括追加";
+            this.addFolderButton.UseVisualStyleBackColor = true;
+            this.addFolderButton.Click += new System.EventHandler(this.OnAddFolderButtonClicked);
             // 
             // chapterAddButton
             // 
@@ -292,6 +308,7 @@
             // 
             // MainForm
             // 
+            this.AllowDrop = true;
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.CancelButton = this.closeButton;
             this.ClientSize = new System.Drawing.Size(653, 375);
@@ -304,6 +321,7 @@
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "MainForm";
             this.Text = "Form1";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.bindingSource)).EndInit();
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
@@ -330,6 +348,7 @@
         private System.Windows.Forms.TextBox consoleTextBox;
         private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.Button addFolderButton;
     }
 }
 

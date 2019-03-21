@@ -45,7 +45,8 @@ namespace Mpeg4AddChapterTool
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 VideoFileDirectory = Path.GetDirectoryName(ofd.FileName);
-                this.SetVideoFile(ofd.FileName);
+
+                this.Item.SetVideoFile(ofd.FileName);
             }
 
             this.UpdateAcceptButton();
@@ -62,7 +63,7 @@ namespace Mpeg4AddChapterTool
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 ChapterFileDirectory = Path.GetDirectoryName(ofd.FileName);
-                this.SetChapterFile1(ofd.FileName);
+                this.Item.ChapterFileName = ofd.FileName;
             }
 
             this.UpdateAcceptButton();
@@ -79,76 +80,10 @@ namespace Mpeg4AddChapterTool
             if (ofd.ShowDialog() == DialogResult.OK)
             {
                 ChapterFile2Directory = Path.GetDirectoryName(ofd.FileName);
-                this.SetChapterFile2(ofd.FileName);
+                this.Item.ChapterFileName2 = ofd.FileName;
             }
 
             this.UpdateAcceptButton();
-        }
-
-        private void SetVideoFile(string path)
-        {
-            this.Item.VideoFileName = path;
-
-            if (string.IsNullOrEmpty(this.Item.ChapterFileName))
-            {
-                var info = new FileInfo(path);
-
-                var filename = info.Name.Substring(0, info.Name.Length - info.Extension.Length);
-                var findChapterFileExtensions = new[]
-                {
-                    ".chap",
-                    ".chapter.txt",
-                    "_chapter.txt"
-                };
-
-                string findBasePath = $"{ info.DirectoryName }\\{ filename }";
-
-                foreach(var extension in findChapterFileExtensions)
-                {
-                    var findPath = findBasePath + extension;
-                    if (File.Exists(findPath))
-                    {
-                        this.SetChapterFile1(findPath);
-                    }
-                }
-
-                info = null;
-            }
-        }
-
-        private void SetChapterFile1(string path)
-        {
-            this.Item.ChapterFileName = path;
-
-            if (string.IsNullOrEmpty(this.Item.ChapterFileName2))
-            {
-                var info = new FileInfo(path);
-
-                var filename = info.Name.Substring(0, info.Name.Length - info.Extension.Length);
-                var findChapterFileExtensions = new[]
-                {
-                    $".apple.ttxt",
-                    $"_apple.ttxt"
-                };
-
-                string findBasePath = $"{ info.DirectoryName }\\{ filename }";
-
-                foreach (var extension in findChapterFileExtensions)
-                {
-                    var findPath = findBasePath + extension;
-                    if (File.Exists(findPath))
-                    {
-                        this.SetChapterFile2(findPath);
-                    }
-                }
-
-                info = null;
-            }
-        }
-
-        private void SetChapterFile2(string path)
-        {
-            this.Item.ChapterFileName2 = path;
         }
 
         private void UpdateAcceptButton()

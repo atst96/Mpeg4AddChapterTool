@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using DragDropLib;
 using MessagePack;
 
 namespace Mpeg4AddChapterTool
@@ -44,6 +45,22 @@ namespace Mpeg4AddChapterTool
 
         #region Chapter list
 
+        private void AddFileList(ChapterItem chapter)
+        {
+            var item = new ListViewItem
+            {
+                Text = Path.GetFileName(chapter.VideoFileName),
+                ToolTipText = chapter.VideoFileName,
+            };
+
+            item.SubItems.Add(Path.GetFileName(chapter.ChapterFileName));
+            item.SubItems.Add(Path.GetFileName(chapter.ChapterFileName2));
+
+            item.Tag = chapter;
+
+            this.chapterItemList.Items.Add(item);
+        }
+
         private void OnChapterItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
         {
             this.chapterRemoveButton.Enabled = e.IsSelected;
@@ -56,31 +73,116 @@ namespace Mpeg4AddChapterTool
             {
                 var chapter = dialog.Item;
 
-                var item = new ListViewItem
-                {
-                    Text = Path.GetFileName(chapter.VideoFileName),
-                    ToolTipText = chapter.VideoFileName,
-                };
-
-                item.SubItems.Add(Path.GetFileName(chapter.ChapterFileName));
-                item.SubItems.Add(Path.GetFileName(chapter.ChapterFileName2));
-
-                item.Tag = chapter;
-
-                this.chapterItemList.Items.Add(item);
+                this.AddFileList(chapter);
             }
 
-            this.UpdateRunButton();
+            this.UpdateRunButtonStatus();
+        }
+
+        private void OnAddFolderButtonClicked(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                if (dialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                var items = FileUtility.GetSupportedDirectoryFiles(dialog.SelectedPath)
+                    .Select(path => new ChapterItem(path));
+
+                foreach (var item in items)
+                {
+                    this.AddFileList(item);
+                }
+            }
+
+            this.UpdateRunButtonStatus();
+        }
+
+        private static Point GetPoint(DragEventArgs drgevent)
+        {
+            return new Point(drgevent.X, drgevent.Y);
+        }
+
+        protected override void OnDragEnter(DragEventArgs drgevent)
+        {
+            var formats = drgevent.Data.GetFormats();
+
+            if (!this.IsRunning && drgevent.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                drgevent.Effect = DragDropEffects.Copy;
+            }
+            else
+            {
+                drgevent.Effect = DragDropEffects.None;
+            }
+
+            DropTargetHelper.DragEnter(this, drgevent.Data, GetPoint(drgevent), drgevent.Effect, "チャプター一覧に追加", null);
+
+            base.OnDragEnter(drgevent);
+        }
+
+        protected override void OnDragOver(DragEventArgs drgevent)
+        {
+            DropTargetHelper.DragOver(GetPoint(drgevent), drgevent.Effect);
+            base.OnDragOver(drgevent);
+        }
+
+        protected override void OnDragDrop(DragEventArgs drgevent)
+        {
+            DropTargetHelper.Drop(drgevent.Data, GetPoint(drgevent), drgevent.Effect);
+            base.OnDragDrop(drgevent);
+
+            var droppedFiles = drgevent.Data.GetData(DataFormats.FileDrop) as string[];
+
+            if (droppedFiles?.Length > 0)
+            {
+                var files = droppedFiles
+                    .Select(path => Directory.Exists(path) ? FileUtility.GetDirectoryFiles(path) : (new[] { path }))
+                    .SelectMany(path => path)
+                    .FilterFileExtension();
+
+                this.AddFiles(files);
+            }
+        }
+
+        private void AddFiles(IEnumerable<string> files)
+        {
+            foreach (var path in files)
+            {
+                var chapter = new ChapterItem(path);
+
+                if (!string.IsNullOrEmpty(chapter.ChapterFileName))
+                {
+                    this.AddFileList(new ChapterItem(path));
+                }
+            }
+        }
+
+        protected override void OnDragLeave(EventArgs e)
+        {
+            DropTargetHelper.DragLeave(this);
+            base.OnDragLeave(e);
         }
 
         private void OnChapterRemoveButtonClicked(object sender, EventArgs e)
         {
+            if (this.chapterItemList.SelectedItems.Count == 0)
+            {
+                return;
+            }
+
+            this.chapterItemList.BeginUpdate();
+
             foreach (ListViewItem item in this.chapterItemList.SelectedItems)
             {
                 this.chapterItemList.Items.Remove(item);
             }
 
-            this.UpdateRunButton();
+            this.chapterItemList.EndUpdate();
+
+            this.UpdateRunButtonStatus();
         }
 
         #endregion Chapter list
@@ -91,7 +193,7 @@ namespace Mpeg4AddChapterTool
         private int _previousTabItemIndex;
         private bool _isPreviousMessageProgress = false;
 
-        private void UpdateRunButton()
+        private void UpdateRunButtonStatus()
         {
             this.runButton.Enabled = !this.IsRunning && this.chapterItemList.Items.Count > 0;
         }
@@ -137,7 +239,7 @@ namespace Mpeg4AddChapterTool
             this.IsAborting = false;
             this.IsRunning = false;
 
-            this.UpdateRunButton();
+            this.UpdateRunButtonStatus();
         }
 
         private async void OnRunButtonClicked(object sender, EventArgs e)
@@ -207,7 +309,7 @@ namespace Mpeg4AddChapterTool
                 }
 
                 ++i;
-                this.progressBar1.Maximum = i;
+                this.progressBar1.Value = i;
             }
 
             this.EndProcess();
@@ -399,8 +501,7 @@ namespace Mpeg4AddChapterTool
 
             this.bindingSource.DataSource = this.Settings = settings;
 
-            if (string.IsNullOrEmpty(settings.Mp4BoxPath)
-                || !File.Exists(settings.Mp4BoxPath))
+            if (string.IsNullOrEmpty(settings.Mp4BoxPath) || !File.Exists(settings.Mp4BoxPath))
             {
                 tabControl1.SelectedIndex = SettingTabItemIndex;
 
@@ -428,6 +529,36 @@ namespace Mpeg4AddChapterTool
             await SaveSettings();
 
             base.OnClosed(e);
+        }
+
+        private void OnKeyDown(object sender, KeyEventArgs e)
+        {
+            if (this.IsRunning)
+            {
+                return;
+            }
+
+            if (e.Modifiers == Keys.Control && e.KeyCode == Keys.A)
+            {
+                this.chapterItemList.BeginUpdate();
+
+                foreach (ListViewItem item in this.chapterItemList.Items)
+                {
+                    item.Selected = true;
+                }
+
+                this.chapterItemList.EndUpdate();
+
+                return;
+            }
+
+            if (e.Modifiers == Keys.None)
+            {
+                if (e.KeyCode == Keys.Delete)
+                {
+                    this.OnChapterRemoveButtonClicked(sender, e);
+                }
+            }
         }
     }
 }
